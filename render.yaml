@@ -1,29 +1,21 @@
-databases:
-  - name: jarvis-db
-    databaseName: jarvis_45zk
-    user: jarvis
-    plan: free
-
 services:
-  - type: web
-    name: jarvis-voice-ai
-    env: node
-    plan: free
-    region: oregon
-    branch: main
-    buildCommand: echo "Pre-built dist files committed to repo - no build step needed"
-    startCommand: node artifacts/api-server/dist/index.mjs
-    healthCheckPath: /api/healthz
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 10000
-      - key: DATABASE_URL
-        fromDatabase:
-          name: jarvis-db
-          property: connectionString
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: SESSION_SECRET
-        generateValue: true
+    - type: web
+      name: jarvis-voice-ai
+      runtime: node
+      plan: free
+      rootDir: .
+      buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build
+      startCommand: node artifacts/api-server/dist/index.mjs
+      healthCheckPath: /api/healthz
+      envVars:
+        - key: NODE_ENV
+          value: production
+        - key: PORT
+          value: 10000
+        - key: DATABASE_URL
+          sync: false
+        - key: GEMINI_API_KEY
+          sync: false
+        - key: SESSION_SECRET
+          sync: false
+  
