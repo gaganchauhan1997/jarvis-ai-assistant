@@ -18,7 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { DictationInputMode } from "@workspace/api-client-react/src/generated/api.schemas";
+import { DictationInputMode } from "@workspace/api-client-react";
 
 export default function Home() {
   const { toast } = useToast();

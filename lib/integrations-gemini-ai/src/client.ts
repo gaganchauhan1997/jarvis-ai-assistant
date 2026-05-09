@@ -1,21 +1,24 @@
 import { GoogleGenAI } from "@google/genai";
 
-if (!process.env.AI_INTEGRATIONS_GEMINI_BASE_URL) {
-  throw new Error(
-    "AI_INTEGRATIONS_GEMINI_BASE_URL must be set. Did you forget to provision the Gemini AI integration?",
-  );
-}
+const replitBaseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+const replitApiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+const directApiKey = process.env.GEMINI_API_KEY;
 
-if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+if (!replitBaseUrl && !directApiKey) {
   throw new Error(
-    "AI_INTEGRATIONS_GEMINI_API_KEY must be set. Did you forget to provision the Gemini AI integration?",
+    "Either AI_INTEGRATIONS_GEMINI_BASE_URL + AI_INTEGRATIONS_GEMINI_API_KEY (Replit) " +
+    "or GEMINI_API_KEY (production) must be set.",
   );
 }
 
 export const ai = new GoogleGenAI({
-  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
-  httpOptions: {
-    apiVersion: "",
-    baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
-  },
+  apiKey: (replitBaseUrl ? replitApiKey : directApiKey) ?? "",
+  ...(replitBaseUrl
+    ? {
+        httpOptions: {
+          apiVersion: "",
+          baseUrl: replitBaseUrl,
+        },
+      }
+    : {}),
 });
