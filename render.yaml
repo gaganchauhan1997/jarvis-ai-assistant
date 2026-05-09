@@ -12,8 +12,8 @@ services:
     region: oregon
     branch: main
     buildCommand: >
-      npm install -g pnpm &&
-      pnpm install --frozen-lockfile &&
+      corepack enable &&
+      pnpm install &&
       BASE_PATH=/ PORT=3000 pnpm --filter @workspace/jarvis-web run build &&
       pnpm --filter @workspace/api-server run build
     startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
