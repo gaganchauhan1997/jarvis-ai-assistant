@@ -95436,7 +95436,7 @@ app.use("/api", routes_default);
 var frontendDist = process.env.FRONTEND_DIR ?? path2.resolve(__dirname, "../../jarvis-web/dist/public");
 if (existsSync(frontendDist)) {
   app.use(import_express4.default.static(frontendDist));
-  app.get("*", (_req, res) => {
+  app.use((_req, res) => {
     res.sendFile(path2.join(frontendDist, "index.html"));
   });
   logger.info({ frontendDist }, "Serving frontend static files");
