@@ -15149,7 +15149,7 @@ var require_mimeScore = __commonJS({
 var require_mime_types = __commonJS({
   "../../node_modules/.pnpm/mime-types@3.0.2/node_modules/mime-types/index.js"(exports) {
     "use strict";
-    var db2 = require_mime_db();
+    var db = require_mime_db();
     var extname = __require("path").extname;
     var mimeScore = require_mimeScore();
     var EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/;
@@ -15168,7 +15168,7 @@ var require_mime_types = __commonJS({
         return false;
       }
       var match = EXTRACT_TYPE_REGEXP.exec(type);
-      var mime = match && db2[match[1].toLowerCase()];
+      var mime = match && db[match[1].toLowerCase()];
       if (mime && mime.charset) {
         return mime.charset;
       }
@@ -15213,8 +15213,8 @@ var require_mime_types = __commonJS({
       return exports.types[extension3] || false;
     }
     function populateMaps(extensions, types5) {
-      Object.keys(db2).forEach(function forEachMimeType(type) {
-        var mime = db2[type];
+      Object.keys(db).forEach(function forEachMimeType(type) {
+        var mime = db[type];
         var exts = mime.extensions;
         if (!exts || !exts.length) {
           return;
@@ -15235,14 +15235,14 @@ var require_mime_types = __commonJS({
       });
     }
     function _preferredType(ext, type0, type1) {
-      var score0 = type0 ? mimeScore(type0, db2[type0].source) : 0;
-      var score1 = type1 ? mimeScore(type1, db2[type1].source) : 0;
+      var score0 = type0 ? mimeScore(type0, db[type0].source) : 0;
+      var score1 = type1 ? mimeScore(type1, db[type1].source) : 0;
       return score0 > score1 ? type0 : type1;
     }
     function _preferredTypeLegacy(ext, type0, type1) {
       var SOURCE_RANK = ["nginx", "apache", void 0, "iana"];
-      var score0 = type0 ? SOURCE_RANK.indexOf(db2[type0].source) : 0;
-      var score1 = type1 ? SOURCE_RANK.indexOf(db2[type1].source) : 0;
+      var score0 = type0 ? SOURCE_RANK.indexOf(db[type0].source) : 0;
+      var score1 = type1 ? SOURCE_RANK.indexOf(db[type1].source) : 0;
       if (exports.types[extension2] !== "application/octet-stream" && (score0 > score1 || score0 === score1 && exports.types[extension2]?.slice(0, 12) === "application/")) {
         return type0;
       }
@@ -32648,15 +32648,15 @@ var require_pg_pool = __commonJS({
       });
       return { callback: cb, result };
     }
-    function makeIdleListener(pool2, client) {
+    function makeIdleListener(pool, client) {
       return function idleListener(err) {
         err.client = client;
         client.removeListener("error", idleListener);
         client.on("error", () => {
-          pool2.log("additional client error after disconnection due to error", err);
+          pool.log("additional client error after disconnection due to error", err);
         });
-        pool2._remove(client);
-        pool2.emit("error", err, client);
+        pool._remove(client);
+        pool.emit("error", err, client);
       };
     }
     var Pool4 = class extends EventEmitter {
@@ -65722,13 +65722,13 @@ function construct(client, config2 = {}) {
   }
   const driver = new NodePgDriver(client, dialect, { logger: logger2, cache: config2.cache });
   const session = driver.createSession(schema);
-  const db2 = new NodePgDatabase(dialect, session, schema);
-  db2.$client = client;
-  db2.$cache = config2.cache;
-  if (db2.$cache) {
-    db2.$cache["invalidate"] = config2.cache?.onMutate;
+  const db = new NodePgDatabase(dialect, session, schema);
+  db.$client = client;
+  db.$cache = config2.cache;
+  if (db.$cache) {
+    db.$cache["invalidate"] = config2.cache?.onMutate;
   }
-  return db2;
+  return db;
 }
 function drizzle(...params) {
   if (typeof params[0] === "string") {
@@ -77160,13 +77160,25 @@ var insertDictationSchema = createInsertSchema(dictationsTable).omit({ id: true,
 
 // ../../lib/db/src/index.ts
 var { Pool: Pool3 } = esm_default;
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?"
-  );
+var _pool = null;
+var _db = null;
+function getPool() {
+  if (!_pool) {
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        "DATABASE_URL must be set. Did you forget to provision a database?"
+      );
+    }
+    _pool = new Pool3({ connectionString: process.env.DATABASE_URL });
+  }
+  return _pool;
 }
-var pool = new Pool3({ connectionString: process.env.DATABASE_URL });
-var db = drizzle(pool, { schema: schema_exports });
+function getDb() {
+  if (!_db) {
+    _db = drizzle(getPool(), { schema: schema_exports });
+  }
+  return _db;
+}
 
 // ../../node_modules/.pnpm/@google+genai@1.52.0/node_modules/@google/genai/dist/node/index.mjs
 var import_p_retry = __toESM(require_p_retry(), 1);
@@ -95285,6 +95297,7 @@ Text: ${rawText}` }]
 });
 router2.get("/dictation/history", async (req, res) => {
   try {
+    const db = getDb();
     const entries = await db.select().from(dictationsTable).orderBy(desc(dictationsTable.createdAt)).limit(50);
     res.json(
       entries.map((e2) => ({
@@ -95309,6 +95322,7 @@ router2.post("/dictation/history", async (req, res) => {
   const { rawText, processedText, mode } = parsed.data;
   const wordCount = processedText.split(/\s+/).filter(Boolean).length;
   try {
+    const db = getDb();
     const [entry] = await db.insert(dictationsTable).values({ rawText, processedText, mode, wordCount }).returning();
     res.status(201).json({
       id: entry.id,
@@ -95329,6 +95343,7 @@ router2.delete("/dictation/history/:id", async (req, res) => {
     return;
   }
   try {
+    const db = getDb();
     await db.delete(dictationsTable).where(sql`${dictationsTable.id} = ${parsed.data.id}`);
     res.status(204).send();
   } catch (err) {
@@ -95338,6 +95353,7 @@ router2.delete("/dictation/history/:id", async (req, res) => {
 });
 router2.get("/dictation/stats", async (req, res) => {
   try {
+    const db = getDb();
     const [totals] = await db.select({
       totalDictations: sql`count(*)::int`,
       totalWords: sql`coalesce(sum(${dictationsTable.wordCount}), 0)::int`

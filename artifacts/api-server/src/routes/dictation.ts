@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { dictationsTable } from "@workspace/db";
+import { getDb, dictationsTable } from "@workspace/db";
 import { desc, sql } from "drizzle-orm";
 import {
   ProcessDictationBody,
@@ -58,6 +57,7 @@ router.post("/dictation/process", async (req, res) => {
 
 router.get("/dictation/history", async (req, res) => {
   try {
+    const db = getDb();
     const entries = await db
       .select()
       .from(dictationsTable)
@@ -90,6 +90,7 @@ router.post("/dictation/history", async (req, res) => {
   const wordCount = processedText.split(/\s+/).filter(Boolean).length;
 
   try {
+    const db = getDb();
     const [entry] = await db
       .insert(dictationsTable)
       .values({ rawText, processedText, mode, wordCount })
@@ -116,6 +117,7 @@ router.delete("/dictation/history/:id", async (req, res) => {
   }
 
   try {
+    const db = getDb();
     await db
       .delete(dictationsTable)
       .where(sql`${dictationsTable.id} = ${parsed.data.id}`);
@@ -128,6 +130,7 @@ router.delete("/dictation/history/:id", async (req, res) => {
 
 router.get("/dictation/stats", async (req, res) => {
   try {
+    const db = getDb();
     const [totals] = await db
       .select({
         totalDictations: sql<number>`count(*)::int`,
