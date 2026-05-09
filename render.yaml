@@ -1,6 +1,6 @@
 databases:
   - name: jarvis-db
-    databaseName: jarvis
+    databaseName: jarvis_45zk
     user: jarvis
     plan: free
 
@@ -11,12 +11,8 @@ services:
     plan: free
     region: oregon
     branch: main
-    buildCommand: >
-      corepack enable &&
-      pnpm install &&
-      BASE_PATH=/ PORT=3000 pnpm --filter @workspace/jarvis-web run build &&
-      pnpm --filter @workspace/api-server run build
-    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
+    buildCommand: echo "Pre-built dist files committed to repo - no build step needed"
+    startCommand: node artifacts/api-server/dist/index.mjs
     healthCheckPath: /api/healthz
     envVars:
       - key: NODE_ENV
