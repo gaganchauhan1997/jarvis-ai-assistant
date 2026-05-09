@@ -4,8 +4,8 @@ services:
       runtime: node
       plan: free
       rootDir: .
-      buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build
-      startCommand: node artifacts/api-server/dist/index.mjs
+      buildCommand: npm install -g pnpm && pnpm install
+      startCommand: node_modules/.bin/tsx artifacts/api-server/src/index.ts
       envVars:
         - key: NODE_ENV
           value: production
