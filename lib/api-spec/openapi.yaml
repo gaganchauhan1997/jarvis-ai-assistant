@@ -1,0 +1,178 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Jarvis Voice AI API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dictation
+    description: Voice dictation and AI processing
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /dictation/process:
+    post:
+      operationId: processDictation
+      tags: [dictation]
+      summary: Process raw transcription with AI
+      description: Takes raw speech transcript and returns cleaned/processed text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictationInput"
+      responses:
+        "200":
+          description: Processed text
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DictationResult"
+
+  /dictation/history:
+    get:
+      operationId: getDictationHistory
+      tags: [dictation]
+      summary: Get recent dictation history
+      responses:
+        "200":
+          description: List of recent dictations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DictationEntry"
+
+    post:
+      operationId: saveDictation
+      tags: [dictation]
+      summary: Save a dictation entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictationEntryInput"
+      responses:
+        "201":
+          description: Saved dictation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DictationEntry"
+
+  /dictation/history/{id}:
+    delete:
+      operationId: deleteDictation
+      tags: [dictation]
+      summary: Delete a dictation entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /dictation/stats:
+    get:
+      operationId: getDictationStats
+      tags: [dictation]
+      summary: Get dictation usage stats
+      responses:
+        "200":
+          description: Usage stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DictationStats"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    DictationInput:
+      type: object
+      required: [rawText, mode]
+      properties:
+        rawText:
+          type: string
+          description: Raw transcribed text from speech recognition
+        mode:
+          type: string
+          enum: [clean, rephrase, bullets, assistant]
+          description: Processing mode
+
+    DictationResult:
+      type: object
+      required: [processedText, mode]
+      properties:
+        processedText:
+          type: string
+        mode:
+          type: string
+
+    DictationEntry:
+      type: object
+      required: [id, rawText, processedText, mode, createdAt]
+      properties:
+        id:
+          type: integer
+        rawText:
+          type: string
+        processedText:
+          type: string
+        mode:
+          type: string
+        createdAt:
+          type: string
+
+    DictationEntryInput:
+      type: object
+      required: [rawText, processedText, mode]
+      properties:
+        rawText:
+          type: string
+        processedText:
+          type: string
+        mode:
+          type: string
+
+    DictationStats:
+      type: object
+      required: [totalDictations, totalWords, todayDictations, mostUsedMode]
+      properties:
+        totalDictations:
+          type: integer
+        totalWords:
+          type: integer
+        todayDictations:
+          type: integer
+        mostUsedMode:
+          type: string
