@@ -5,7 +5,7 @@ services:
       plan: free
       rootDir: .
       buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build
-      startCommand: cd artifacts/api-server && node dist/index.mjs
+      startCommand: node start-debug.mjs
       envVars:
         - key: NODE_ENV
           value: production
